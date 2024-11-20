@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interpreter</title>
+    <!-- ui-kit css -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.21.13/dist/css/uikit.min.css" />
+    <!-- ui-kit js -->
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.13/dist/js/uikit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.13/dist/js/uikit-icons.min.js"></script>
+    <!-- cookie js -->
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
+    <!-- code_mirror -->
+    <link rel="stylesheet" href="./{{ url_for('static', filename='code_mirror/lib/codemirror.css') }}">
+    <link rel="stylesheet" href="./{{ url_for('static', filename='code_mirror/addon/fold/foldgutter.css') }}">
+    <link rel="stylesheet" href="./{{ url_for('static', filename='code_mirror/addon/dialog/dialog.css') }}">
+    <link rel="stylesheet" href="./{{ url_for('static', filename='code_mirror/theme/monokai.css') }}">
+    <link rel="stylesheet" href="./{{ url_for('static', filename='code_mirror/theme/error-theme.css') }}">
+    <script src="./{{ url_for('static', filename='code_mirror/lib/codemirror.js') }}"></script>
+    <script src="./{{ url_for('static', filename='code_mirror/addon/search/searchcursor.js') }}"></script>
+    <script src="./{{ url_for('static', filename='code_mirror/addon/search/search.js') }}"></script>
+    <script src="./{{ url_for('static', filename='code_mirror/addon/dialog/dialog.js') }}"></script>
+    <script src="./{{ url_for('static', filename='code_mirror/addon/edit/matchbrackets.js') }}"></script>
+    <script src="./{{ url_for('static', filename='code_mirror/addon/edit/closebrackets.js') }}"></script>
+    <script src="./{{ url_for('static', filename='code_mirror/addon/comment/comment.js') }}"></script>
+    <script src="./{{ url_for('static', filename='code_mirror/addon/wrap/hardwrap.js') }}"></script>
+    <script src="./{{ url_for('static', filename='code_mirror/addon/fold/foldcode.js') }}"></script>
+    <script src="./{{ url_for('static', filename='code_mirror/addon/fold/brace-fold.js') }}"></script>
+    <script src="./{{ url_for('static', filename='code_mirror/keymap/sublime.js') }}"></script>
+    <!-- code_mirror_modes -->
+    <script src="./{{ url_for('static', filename='code_mirror/mode/javascript/javascript.js') }}"></script>
+    <script src="./{{ url_for('static', filename='code_mirror/mode/clike/clike.js') }}"></script>
+    <script src="./{{ url_for('static', filename='code_mirror/mode/python/python.js') }}"></script>
+</head>
+<body>
+    <main class="uk-container uk-margin-top">
+        <h1>Interpreter</h1>
+        <div class="select_language">
+            <select class="uk-select" name="language" id="language" onchange="on_change_lang_selection()">
+                <option value="python">Python</option>
+                <option value="cpp">C++</option>
+                <option value="c">C</option>
+                <option value="java">Java</option>
+                <option value="js">JavaScript</option>
+            </select>
+        </div>
+        <div class="uk-container uk-padding-small">
+            <article id="code"></article>
+        </div>
+        <div class="uk-container uk-flex uk-padding-small">
+            <div class="uk-width-1-2 uk-margin-right">
+                <label for="">input:</label>
+                <article id="stdin"></article>
+            </div>
+            <div class="uk-width-1-2 uk-margin-left">
+                <label for="">output:</label>
+                <article id="stdout"></article>
+            </div>
+        </div>
+        <div class="uk-container uk-padding-small">
+            <label for="">error:</label>
+            <article id="stderr"></article>
+        </div>
+        <div class="uk-container uk-padding-small uk-flex uk-flex-right">
+            <button id="run" class="uk-button uk-button-primary">Запустить</button> 
+        </div>
+    </main>
+
+    <script>
+        const python_params = {
+            value: "print('Hello, world!')\n",
+            mode: "python"
+        }
+        const cpp_params = {
+            value: "#include <iostream>\n\nint main()\n{\n    std::cout << \"Hello World!\\n\";\n}\n",
+            mode: "text/x-c++src"
+        }
+        const java_params = {
+            value: "public class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}\n",
+            mode: "text/x-java"
+        }
+        const c_params = {
+            value: "#include <stdio.h> int main() { printf(\"Hello, World!\\n\"); return 0; }",
+            mode: "text/x-csrc"
+        }
+        const js_params = {
+            value: "console.log('Hello, World!');",
+            mode: "text/javascript"
+        }
+        const default_params = {
+            value: "language not support",
+        }
+        function get_params_for_editor(language){
+            switch (language){
+                case "python":
+                    return python_params
+                case "cpp":
+                    return cpp_params
+                case "c":
+                    return c_params
+                case "java":
+                    return java_params
+                case "js":
+                    return js_params
+                default:
+                    return default_params
+            }
+        }
+        function set_options_to_editor(options){
+            Object.entries(options).forEach(([key, value]) => {
+                editor.setOption(key, value)
+            })
+        }
+        function on_change_lang_selection(){
+            set_options_to_editor(
+                get_params_for_editor(
+                    document.getElementById("language").value
+                )
+            )
+        }
+        let editor = CodeMirror(document.getElementById('code'), {
+            lineNumbers: true,
+            keyMap: "sublime",
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            showCursorWhenSelecting: true,
+            theme: "monokai",
+            tabSize: 4
+        })
+
+        let stdin = CodeMirror(document.getElementById('stdin'), {
+            lineNumbers: true,
+            showCursorWhenSelecting: true,
+            theme: "monokai",
+        })
+        let stdout = CodeMirror(document.getElementById('stdout'), {
+            lineNumbers: true,
+            theme: "monokai",
+            readOnly: true,
+        })
+        let stderr = CodeMirror(document.getElementById('stderr'), {
+            lineNumbers: true,
+            theme: "error-theme",
+            readOnly: true,
+        })
+
+        on_change_lang_selection()
+    </script>
+
+    <script>
+        const button = document.getElementById('run')
+        button.addEventListener('click', function (event) {
+            button.disabled = true
+
+            // Получаем данные из объектов с id language, code, input
+            const language = document.getElementById('language').value;
+            const code = editor.getValue();
+            const input = stdin.getValue();
+
+            // Формируем объект для отправки на сервер
+            const data = {
+                language: language,
+                code: code,
+                input: input
+            };
+
+            // Отправляем данные на сервер с помощью fetch
+            fetch('.', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log(result)
+                // Помещаем полученные данные в объекты с id output и error
+                stdout.setValue(result.stdout)
+                stderr.setValue(result.stderr)
+            })
+            .catch(error => {
+                console.error(error);
+                stderr.setValue("Ошибка связи с сервером\nПопробуйте отправить данные ещё раз или перезапустите страницу\nПодробности:\т" + result.stderr)
+            })
+            .finally(() => {
+                button.disabled = false
+            }
+        );
+    });
+    </script>
+</body>
+</html>
