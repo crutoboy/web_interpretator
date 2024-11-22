@@ -43,6 +43,7 @@
                 <option value="c">C</option>
                 <option value="java">Java</option>
                 <option value="js">JavaScript</option>
+                <option value="rust">Rust</option>
             </select>
         </div>
         <div class="uk-container uk-padding-small">
@@ -88,6 +89,10 @@
             value: "console.log('Hello, World!');",
             mode: "text/javascript"
         }
+        const rust_params = {
+            value: "fn main() {\n    println!(\"Hello, world!\")\;\n}\n",
+            mode: "text/x-rustsrc"
+        }
         const default_params = {
             value: "language not support",
         }
@@ -103,6 +108,8 @@
                     return java_params
                 case "js":
                     return js_params
+                case "rust":
+                    return rust_params
                 default:
                     return default_params
             }

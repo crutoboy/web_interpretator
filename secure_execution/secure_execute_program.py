@@ -13,7 +13,7 @@ def start_program(program: str, stdin: str = '', language: str = 'python', \
     Параметры:
     - program (str): Код программы.
     - stdin (str): Входные данные.
-    - language (str): Язык программирования (поддерживается: 'python', 'cpp', 'c', 'java', 'js').
+    - language (str): Язык программирования (поддерживается: 'python', 'cpp', 'c', 'java', 'js', 'rust).
     - cpu (float): Ограничение на использование процессора.
     - memory (int): Ограничение на использование памяти в мегабайтах.
     - timeout (float): Лимит времени выполнения.
@@ -38,6 +38,9 @@ def start_program(program: str, stdin: str = '', language: str = 'python', \
         return (stdout, stderr, status_code)
     elif language == 'js':
         stdout, stderr, status_code = programing_languages.js_exec.execute_js_program(program, stdin, cpu, memory, timeout)
+        return (stdout, stderr, status_code)
+    elif language == 'rust':
+        stdout, stderr, status_code = programing_languages.rust_exec.execute_rust_program(program, stdin, cpu, memory, timeout)
         return (stdout, stderr, status_code)
     else:
         return ('', 'Error: language not supported', None)
